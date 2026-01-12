@@ -1,7 +1,9 @@
 package vn.tafi.process;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Font;
+import java.awt.Insets;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
@@ -47,7 +49,14 @@ public class FilteredListPanel extends JPanel {
 		// Text field
 		textField = new JTextField();
 		textField.setFont(new Font("Arial Unicode MS", Font.PLAIN, 13));
-		textField.setBorder(BorderFactory.createLineBorder(new java.awt.Color(200, 200, 200)));
+		textField.setForeground(new Color(30, 35, 40)); // Màu text đen sáng
+		textField.setBackground(Color.WHITE);
+		textField.setMargin(new Insets(6, 8, 6, 8));
+		textField.setBorder(BorderFactory.createCompoundBorder(
+			BorderFactory.createLineBorder(new Color(180, 195, 210), 1),
+			BorderFactory.createEmptyBorder(4, 6, 4, 6)
+		));
+		textField.setCaretColor(new Color(0, 120, 215)); // Cursor xanh dương
 		add(textField, BorderLayout.CENTER);
 
 		// All items storage
@@ -58,6 +67,10 @@ public class FilteredListPanel extends JPanel {
 		listModel = new DefaultListModel<>();
 		list = new JList<>(listModel);
 		list.setFont(new Font("Arial Unicode MS", Font.PLAIN, 12));
+		list.setForeground(new Color(30, 35, 40)); // Màu text đen sáng
+		list.setBackground(Color.WHITE);
+		list.setSelectionBackground(new Color(0, 120, 215));
+		list.setSelectionForeground(Color.WHITE);
 		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
 		// Popup menu and ScrollPane will be created/recreated as needed
@@ -153,13 +166,16 @@ public class FilteredListPanel extends JPanel {
 		// Recreate popup if needed (handles the case where it was hidden before)
 		if (popupMenu == null || !popupMenu.isDisplayable()) {
 			popupMenu = new JPopupMenu();
-			popupMenu.setOpaque(false);
-			popupMenu.setBorder(null);
+			popupMenu.setOpaque(true);
+			popupMenu.setBackground(Color.WHITE);
+			popupMenu.setBorder(BorderFactory.createLineBorder(new Color(180, 195, 210), 1)); // Border sáng hơn
 			popupMenu.setFocusable(false);
 
 			scrollPane = new JScrollPane(list);
 			scrollPane.setPreferredSize(new java.awt.Dimension(250, 200));
 			scrollPane.setFocusable(false);
+			scrollPane.setBackground(Color.WHITE);
+			scrollPane.getViewport().setBackground(Color.WHITE);
 			popupMenu.add(scrollPane);
 		}
 	}

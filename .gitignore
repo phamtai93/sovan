@@ -61,3 +61,6 @@ local.properties
 bin/
 dist/
 *SNAPSHOT.jar
+
+# Test data folder
+tests/

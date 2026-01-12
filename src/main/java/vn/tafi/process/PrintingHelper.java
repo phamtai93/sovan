@@ -1,5 +1,6 @@
 package vn.tafi.process;
 
+import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
@@ -34,6 +35,7 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextArea;
 
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import vn.tafi.object.ConfigLoader;
 import vn.tafi.object.MortalObject;
 
@@ -42,6 +44,7 @@ public class PrintingHelper {
 	// Store references for later updates
 	private static JRadioButton maleRadioRef = null;
 	private static FilteredListPanel personListPanelRef = null;
+	private static FilteredListPanel endPositionPanelRef = null;
 
 	/**
 	 * Create print panel UI with all components
@@ -62,13 +65,17 @@ public class PrintingHelper {
 		// Row 0: Title
 		JLabel titleLabel = new JLabel("In nhãn hình nhân", JLabel.CENTER);
 		titleLabel.setFont(new Font("Arial Unicode MS", Font.BOLD, 16));
+		titleLabel.setForeground(new Color(200, 205, 210)); // Light text matching parent panel
 		gbc.gridwidth = 2;
 		panel.add(titleLabel, gbc);
 
 		// Row 1: Printer selection
 		gbc.gridy++;
 		gbc.gridwidth = 1;
-		panel.add(new JLabel("Chọn máy in:"), gbc);
+		JLabel printerLabel = new JLabel("Chọn máy in:");
+		printerLabel.setForeground(new Color(200, 205, 210)); // Light text matching parent panel
+		panel.add(printerLabel, gbc);
+		panel.setFont(new Font("Calibri", Font.PLAIN, 14));
 
 		gbc.gridx = 1;
 		JComboBox<String> printerComboBox = initializePrinterComboBox();
@@ -80,7 +87,8 @@ public class PrintingHelper {
 		gbc.gridwidth = 2;
 		JLabel instructionLabel = new JLabel(
 				"<html>Hãy đảm bảo máy in đang sẵn sàng hoạt động.<br>Bạn muốn in nhãn cho nam hay nữ?</html>");
-		instructionLabel.setFont(new Font("Arial Unicode MS", Font.PLAIN, 14));
+		instructionLabel.setFont(new Font("Calibri", Font.PLAIN, 14));
+		instructionLabel.setForeground(new Color(200, 205, 210)); // Light text matching parent panel
 		panel.add(instructionLabel, gbc);
 
 		// Row 3: Gender radio buttons
@@ -96,42 +104,72 @@ public class PrintingHelper {
 		// Row 4: Person selection
 		gbc.gridy++;
 		gbc.gridwidth = 1;
-		panel.add(new JLabel("Bắt đầu ở vị trí:"), gbc);
+		JLabel positionLabel = new JLabel("Bắt đầu ở vị trí:");
+		positionLabel.setForeground(new Color(200, 205, 210)); // Light text matching parent panel
+		panel.add(positionLabel, gbc);
+		panel.setFont(new Font("Calibri", Font.PLAIN, 14));
 
 		gbc.gridx = 1;
 		gbc.gridwidth = 1;
 		FilteredListPanel personListPanel = new FilteredListPanel();
 		panel.add(personListPanel, gbc);
 
+		// Row 5: End position selection
+		gbc.gridy++;
+		gbc.gridx = 0;
+		gbc.gridwidth = 1;
+		JLabel endPositionLabel = new JLabel("Kết thúc ở vị trí:");
+		endPositionLabel.setForeground(new Color(200, 205, 210)); // Light text matching parent panel
+		panel.add(endPositionLabel, gbc);
+
+		gbc.gridx = 1;
+		gbc.gridwidth = 1;
+		FilteredListPanel endPositionPanel = new FilteredListPanel();
+		panel.add(endPositionPanel, gbc);
+
 		// Store references for later updates
 		maleRadioRef = maleRadio;
 		personListPanelRef = personListPanel;
+		endPositionPanelRef = endPositionPanel;
 
 		// Don't populate initially - will be populated after data is loaded
 
 		// Radio button listeners - switch gender updates person list
 		maleRadio.addActionListener(e -> {
 			personListPanel.setSelectedIndex(-1);
+			endPositionPanel.setSelectedIndex(-1);
 			updatePersonListPanel(personListPanel, mortalObjects, true);
+			updatePersonListPanel(endPositionPanel, mortalObjects, true);
 		});
 
 		femaleRadio.addActionListener(e -> {
 			personListPanel.setSelectedIndex(-1);
+			endPositionPanel.setSelectedIndex(-1);
 			updatePersonListPanel(personListPanel, mortalObjects, false);
+			updatePersonListPanel(endPositionPanel, mortalObjects, false);
 		});
 
-		// Row 5: Print button
+		// Row 6: Print button
 		gbc.gridy++;
 		gbc.gridx = 0;
 		gbc.gridwidth = 2;
 		JButton printButton = new JButton("In nhãn");
+		printButton.setBackground(new Color(83, 109, 254));
+		printButton.setForeground(new Color(248, 249, 250));
 		printButton.setFont(new Font("Arial Unicode MS", Font.BOLD, 14));
+		// Add printer icon
+		try {
+			FlatSVGIcon printerIcon = new FlatSVGIcon("icons/printer.svg", 18, 18);
+			printButton.setIcon(printerIcon);
+		} catch (Exception e) {
+			System.err.println("Could not load printer icon: " + e.getMessage());
+		}
 		panel.add(printButton, gbc);
 
 		// Print button action
 		printButton.addActionListener(e -> {
 			boolean isMale = maleRadio.isSelected();
-			processPrinting(printerComboBox, personListPanel, mortalObjects, isMale, logTextArea, selectedFilePath);
+			processPrinting(printerComboBox, personListPanel, endPositionPanel, mortalObjects, isMale, logTextArea, selectedFilePath);
 		});
 
 		return panel;
@@ -164,6 +202,11 @@ public class PrintingHelper {
 
 		buttonGroup.add(maleRadio);
 		buttonGroup.add(femaleRadio);
+
+		maleRadio.setForeground(new Color(200, 205, 210)); // Light text matching parent panel
+		maleRadio.setOpaque(false);
+		femaleRadio.setForeground(new Color(200, 205, 210)); // Light text matching parent panel
+		femaleRadio.setOpaque(false);
 
 		JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER));
 		panel.setOpaque(false);
@@ -211,7 +254,7 @@ public class PrintingHelper {
 	 * Process printing - validation, confirmation, launch worker
 	 */
 	public static void processPrinting(JComboBox<String> printerComboBox, FilteredListPanel personListPanel,
-			List<MortalObject> mortalObjects, boolean isMale, JTextArea logTextArea, String[] selectedFilePath) {
+			FilteredListPanel endPositionPanel, List<MortalObject> mortalObjects, boolean isMale, JTextArea logTextArea, String[] selectedFilePath) {
 
 		// 1. Check if printer is selected
 		String selectedPrinter = (String) printerComboBox.getSelectedItem();
@@ -227,9 +270,9 @@ public class PrintingHelper {
 			return;
 		}
 
-		// 3. Build print queue based on selection
+		// 3. Build print queue based on start and end position selection
 		// Use getSelectedObject() to get the MortalObject instead of text
-		List<MortalObject> printQueue = buildPrintQueue(mortalObjects, isMale, personListPanel.getSelectedObject());
+		List<MortalObject> printQueue = buildPrintQueue(mortalObjects, isMale, personListPanel.getSelectedObject(), endPositionPanel.getSelectedObject());
 
 		if (printQueue.isEmpty()) {
 			JOptionPane.showMessageDialog(null, "Không có người nào để in!", "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -238,12 +281,17 @@ public class PrintingHelper {
 
 		// 4. Show confirmation
 		String genderText = isMale ? "nam" : "nữ";
+		String startPosition = printQueue.size() > 0
+			? printQueue.get(0).getFmName() + " " + printQueue.get(0).getMidName() + " " + printQueue.get(0).getName()
+			: "";
+		String endPosition = printQueue.size() > 0
+			? printQueue.get(printQueue.size() - 1).getFmName() + " " + printQueue.get(printQueue.size() - 1).getMidName() + " " + printQueue.get(printQueue.size() - 1).getName()
+			: "";
 		int confirm = JOptionPane.showConfirmDialog(null,
 				String.format(
-						"Bạn có chắc muốn in %d nhãn %s (x2 bản = %d trang)?\n\nMáy in: %s\nBắt đầu từ: %s",
+						"Bạn có chắc muốn in %d nhãn %s (x2 bản = %d trang)?\n\nMáy in: %s\nBắt đầu từ: %s\nKết thúc ở: %s",
 						printQueue.size(), genderText, printQueue.size() * 2, selectedPrinter,
-						printQueue.get(0).getFmName() + " " + printQueue.get(0).getMidName() + " "
-								+ printQueue.get(0).getName()),
+						startPosition, endPosition),
 				"Xác nhận in", JOptionPane.YES_NO_OPTION);
 
 		if (confirm != JOptionPane.YES_OPTION) {
@@ -304,10 +352,10 @@ public class PrintingHelper {
 	}
 
 	/**
-	 * Build print queue based on gender and selection
+	 * Build print queue based on gender and start/end position selection
 	 */
 	private static List<MortalObject> buildPrintQueue(List<MortalObject> allObjects, boolean isMale,
-			Object selectedPerson) {
+			Object startPerson, Object endPerson) {
 
 		String targetGender = isMale ? "Nam" : "Nữ";
 
@@ -316,25 +364,37 @@ public class PrintingHelper {
 				.filter(obj -> !obj.isNotSupported()).collect(Collectors.toList());
 
 		// If no selection, return all
-		if (selectedPerson == null) {
+		if (startPerson == null && endPerson == null) {
 			return filtered;
 		}
 
-		// selectedPerson is a MortalObject, find its index in filtered list
-		int startIndex = -1;
-		for (int i = 0; i < filtered.size(); i++) {
-			if (filtered.get(i) == selectedPerson) {
-				startIndex = i;
-				break;
+		// Find start index
+		int startIndex = 0;
+		if (startPerson != null) {
+			for (int i = 0; i < filtered.size(); i++) {
+				if (filtered.get(i) == startPerson) {
+					startIndex = i;
+					break;
+				}
 			}
 		}
 
-		if (startIndex == -1) {
-			return filtered; // Fallback: print all if object not found
+		// Find end index
+		int endIndex = filtered.size();
+		if (endPerson != null) {
+			for (int i = 0; i < filtered.size(); i++) {
+				if (filtered.get(i) == endPerson) {
+					endIndex = i + 1; // +1 to include the end person
+					break;
+				}
+			}
 		}
 
-		// Return sublist from startIndex to end
-		return filtered.subList(startIndex, filtered.size());
+		// Return sublist from startIndex to endIndex
+		if (startIndex <= endIndex) {
+			return filtered.subList(startIndex, endIndex);
+		}
+		return filtered; // Fallback: print all if indices are invalid
 	}
 
 	/**
@@ -348,12 +408,13 @@ public class PrintingHelper {
 	}
 
 	/**
-	 * Populate person list panel after data is loaded
+	 * Populate person list panels after data is loaded
 	 */
 	public static void populatePersonListPanel(List<MortalObject> mortalObjects) {
-		if (personListPanelRef != null && maleRadioRef != null) {
+		if (personListPanelRef != null && endPositionPanelRef != null && maleRadioRef != null) {
 			boolean isMale = maleRadioRef.isSelected();
 			updatePersonListPanel(personListPanelRef, mortalObjects, isMale);
+			updatePersonListPanel(endPositionPanelRef, mortalObjects, isMale);
 		}
 	}
 

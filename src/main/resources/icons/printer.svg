@@ -1,0 +1,31 @@
+<svg width="800px" height="800px" viewBox="0 0 32 32" enable-background="new 0 0 32 32" id="Stock_cut" version="1.1"
+    xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+    data-iconid="343474" data-svgname="printer device print">
+
+    <desc fill="#e2cde4" style="fill: rgb(226, 205, 228);"></desc>
+
+    <g fill="#e2cde4" style="fill: rgb(226, 205, 228);">
+
+        <path d="M26,23h1   c1.105,0,2-0.895,2-2V9c0-1.105-0.895-2-2-2H5C3.895,7,3,7.895,3,9v12c0,1.105,0.895,2,2,2h1"
+            fill="none" stroke="#e2cde4" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2"
+            style="stroke: rgb(226, 205, 228); fill: none;"></path>
+
+        <line fill="none" stroke="#e2cde4" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" x1="6"
+            x2="26" y1="19" y2="19" style="stroke: rgb(226, 205, 228); fill: none;"></line>
+
+
+
+
+
+        <line fill="none" stroke="#e2cde4" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" x1="26"
+            x2="24" y1="11" y2="11" style="stroke: rgb(226, 205, 228); fill: none;"></line>
+
+        <line fill="none" stroke="#e2cde4" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" x1="12"
+            x2="20" y1="23" y2="23" style="stroke: rgb(226, 205, 228); fill: none;"></line>
+
+        <line fill="none" stroke="#e2cde4" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" x1="12"
+            x2="20" y1="27" y2="27" style="stroke: rgb(226, 205, 228); fill: none;"></line>
+
+    </g>
+
+</svg>

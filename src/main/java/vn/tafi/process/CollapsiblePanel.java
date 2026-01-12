@@ -34,13 +34,16 @@ public class CollapsiblePanel extends JPanel {
 
 		// Create toggle button panel
 		JPanel headerPanel = new JPanel(new BorderLayout());
-		headerPanel.setOpaque(false);
-		headerPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+		headerPanel.setBackground(new Color(60, 70, 80)); // Dark gray matching frame background
+		headerPanel.setBorder(BorderFactory.createCompoundBorder(
+			BorderFactory.createLineBorder(new Color(70, 85, 100), 1),
+			BorderFactory.createEmptyBorder(8, 12, 8, 12)
+		));
 
 		// Toggle button with arrow
-		toggleButton = new JLabel(ARROW_DOWN + " " + title, SwingConstants.CENTER);
+		toggleButton = new JLabel(ARROW_DOWN + " " + title, SwingConstants.LEFT);
 		toggleButton.setFont(new Font("Arial Unicode MS", Font.BOLD, 14));
-		toggleButton.setForeground(new Color(0, 102, 204)); // Blue color
+		toggleButton.setForeground(new Color(255, 255, 255)); // White text for contrast
 		toggleButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 		toggleButton.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
 
@@ -48,12 +51,12 @@ public class CollapsiblePanel extends JPanel {
 		toggleButton.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseEntered(MouseEvent e) {
-				toggleButton.setForeground(new Color(0, 51, 153)); // Darker blue on hover
+				toggleButton.setForeground(new Color(200, 200, 200)); // Light gray on hover
 			}
 
 			@Override
 			public void mouseExited(MouseEvent e) {
-				toggleButton.setForeground(new Color(0, 102, 204)); // Original blue
+				toggleButton.setForeground(new Color(255, 255, 255)); // White text
 			}
 
 			@Override
