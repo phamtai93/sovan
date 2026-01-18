@@ -7,7 +7,7 @@ Phần mềm Java Swing hỗ trợ xử lý và cập nhật thông tin trong s�
 - Tạo các file in ấn phục vụ nghi lễ
 
 ## Cấu hình
-File: `updateFile.config`
+File: `App.config`
 - `year`: Năm Dương lịch cần cập nhật (ví dụ: 2026)
 - `lunaYear`: Năm Âm lịch (ví dụ: Bính Ngọ)
 - `labelSaoHanTemplate`: Mẫu câu cho nhãn in Sao Hạn
@@ -169,7 +169,7 @@ Xử lý danh sách đệ tử từ Excel và tạo các file in ấn.
 ### Package: `vn.tafi.object`
 
 1. **ConfigLoader.java**
-   - Load properties từ `updateFile.config`
+   - Load properties từ `App.config`
    - Singleton pattern
    - `getProperty(key)`: Lấy giá trị config
 

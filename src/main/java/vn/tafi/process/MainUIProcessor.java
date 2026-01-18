@@ -285,11 +285,11 @@ public class MainUIProcessor {
 
 		/* Phần xử lý nút tạo nhãn và file ghi chú **/
 		createLabelButton.addActionListener(e -> {
-			MotalListProcessingHelper.processCreateLabelAndNote(logTextArea, mortalObjects);
+			MotalListProcessingHelper.processCreateLabelAndNote(logTextArea, mortalObjects, selectedFilePath[0]);
 		});
 
 		writeSoButton.addActionListener(e -> {
-			MotalListProcessingHelper.processWritingSo(logTextArea, mortalObjects);
+			MotalListProcessingHelper.processWritingSo(logTextArea, mortalObjects, selectedFilePath[0]);
 		});
 
 		// Bỏ chọn file
@@ -382,13 +382,6 @@ public class MainUIProcessor {
 		button.setOpaque(true);
 		button.setBorderPainted(true);
 		button.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
-	}
-
-	/**
-	 * Style button mà không cần icon (backward compatibility)
-	 */
-	private static void styleButton(JButton button, String type) {
-		styleButton(button, type, null);
 	}
 
 	/**

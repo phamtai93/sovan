@@ -123,14 +123,68 @@ public class MotalListProcessingHelper {
 						"Thông báo", JOptionPane.INFORMATION_MESSAGE);
 			} else {
 				MortalDataResultDTO dataResultDTO = processMortalObjectsFromExcel(mortalObjects, currentYear);
+
+				// Kiểm tra xem có Mortal object nào không có hostOrder
+				List<String> allErrors = new ArrayList<>(dataResultDTO.getErrorMessages());
+				List<MortalObject> nullHostOrderObjects = new ArrayList<>();
+				for (MortalObject obj : mortalObjects) {
+					if (obj.getHostOrder() == null) {
+						nullHostOrderObjects.add(obj);
+						String errorMsg = String.format("STT: %s | Họ tên: %s %s %s | Lỗi: Thiếu thông tin 'Hộ thứ'",
+								obj.getOrder(), obj.getFmName(), obj.getMidName(), obj.getName());
+						allErrors.add(errorMsg);
+					}
+				}
+
 				// Hiển thị kết quả vào textArea
-				if (!dataResultDTO.getErrorMessages().isEmpty()) {
-					logTextArea.setText(
-							"⚠️ Danh sách lỗi phát hiện:\n" + String.join("\n", dataResultDTO.getErrorMessages()));
+				logTextArea.setText("   Xử lý dữ liệu cho năm: " + currentYear + " - " + lunarYear + "\n");
+
+				if (!allErrors.isEmpty()) {
+					// Có lỗi: hiển thị danh sách lỗi
+					logTextArea.append("❌ Kiểm tra THẤT BẠI: Phát hiện " + allErrors.size() + " lỗi\n\n");
+					logTextArea.append("⚠️ Danh sách lỗi phát hiện:\n");
+					logTextArea.append(new String(new char[80]).replace('\0', '=') + "\n");
+					for (String error : allErrors) {
+						logTextArea.append(error + "\n");
+					}
+					logTextArea.append(new String(new char[80]).replace('\0', '=') + "\n");
+					logTextArea.append("\n💡 Vui lòng kiểm tra lại file Excel và sửa các lỗi phát hiện.\n");
 				} else {
-					logTextArea.setText("   Xử lý dữ liệu cho năm: " + currentYear + " - " + lunarYear + "\n");
+					// Kiểm tra thành công
 					logTextArea.append("✅ Kiểm tra hoàn tất: " + mortalObjects.size()
 							+ " dòng dữ liệu đã được nạp từ file Excel và không có lỗi. \n");
+
+					// Debug: In thông tin chi tiết từng người nếu config cho phép
+					String debugPrintMortalInfo = ConfigLoader.getProperty("debug-printMortalInfo");
+					if ("true".equalsIgnoreCase(debugPrintMortalInfo)) {
+						String separator = new String(new char[80]).replace('\0', '=');
+						logTextArea.append("\n" + separator + "\n");
+						logTextArea.append("📋 THÔNG TIN CHI TIẾT TỪNG NGƯỜI (Debug Mode)\n");
+						logTextArea.append(separator + "\n\n");
+
+						for (MortalObject obj : mortalObjects) {
+							logTextArea.append(String.format("STT: %s | Họ tên: %s %s %s\n",
+									obj.getOrder(), obj.getFmName(), obj.getMidName(), obj.getName()));
+							logTextArea.append(String.format("  Giới tính: %s | Tuổi gốc: %s | Tuổi tính lại: %s\n",
+									obj.getGender(), obj.getAge(), obj.getAgeRecalculated()));
+							logTextArea.append(String.format("  Thiên Căn: %s | Địa Chi: %s | Địa chỉ: %s\n",
+									obj.getThienCan(), obj.getDiaChi(), obj.getAddress()));
+							logTextArea.append(String.format("  Năm sinh (ước): %s | Chủ hộ: %s | Hộ thứ: %s\n",
+									obj.getEstimatedYearOB(), obj.isAHost() ? "Có" : "Không", obj.getHostOrder()));
+
+							if (obj.getSaoRecalculated() != null) {
+								logTextArea.append(String.format("  Sao chiếu mệnh: %s\n", obj.getSaoRecalculated().getSaoName()));
+							}
+							if (obj.getHanRecalculated() != null) {
+								logTextArea.append(String.format("  Hạn: %s\n", obj.getHanRecalculated().getHanName()));
+							}
+							if (obj.isNotSupported()) {
+								logTextArea.append("  ⚠️ Không được hỗ trợ\n");
+							}
+							logTextArea.append("\n");
+						}
+						logTextArea.append(separator + "\n");
+					}
 				}
 			}
 		} catch (NumberFormatException ex) {
@@ -138,17 +192,23 @@ public class MotalListProcessingHelper {
 		}
 	}
 
-	public static void processCreateLabelAndNote(JTextArea logTextArea, final List<MortalObject> mortalObjects) {
+	public static void processCreateLabelAndNote(JTextArea logTextArea, final List<MortalObject> mortalObjects, String excelFilePath) {
 		if (mortalObjects == null || mortalObjects.isEmpty()) {
 			JOptionPane.showMessageDialog(null, "Không có dữ liệu để tạo nhãn!", "Lỗi", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 
 		try {
-			String saoHanTemplatePath = System.getProperty("user.dir") + "/printLabelSaoHanTemplate.docx";
-			String coverTemplatePath = System.getProperty("user.dir") + "/printCoverTemplate.docx";
-			String noteTemplatePath = System.getProperty("user.dir") + "/printNotebookTemplate.docx";
-			String outputDir = System.getProperty("user.dir");
+			// Lấy thư mục chứa file Excel (ưu tiên) hoặc working directory
+			String excelFileDirectory = (excelFilePath != null && !excelFilePath.isEmpty())
+				? new File(excelFilePath).getParent()
+				: System.getProperty("user.dir");
+
+			String saoHanTemplatePath = Utils.findTemplateFile("printLabelSaoHanTemplate.docx", excelFileDirectory).getAbsolutePath();
+			String coverTemplatePath = Utils.findTemplateFile("printCoverTemplate.docx", excelFileDirectory).getAbsolutePath();
+			String noteTemplatePath = Utils.findTemplateFile("printNotebookTemplate.docx", excelFileDirectory).getAbsolutePath();
+			String outputDir = excelFileDirectory;
+
 			generateLabelWordFiles(saoHanTemplatePath, coverTemplatePath, noteTemplatePath, outputDir, mortalObjects,
 					logTextArea);
 		} catch (Exception ex) {
@@ -612,7 +672,7 @@ public class MotalListProcessingHelper {
 		}
 	}
 
-	public static void processWritingSo(JTextArea logTextArea, final List<MortalObject> mortalObjects) {
+	public static void processWritingSo(JTextArea logTextArea, final List<MortalObject> mortalObjects, String excelFilePath) {
 	    // 📌 🛑 Kiểm tra nếu chưa chọn file
 	    if (mortalObjects == null || mortalObjects.isEmpty()) {
 	    	JOptionPane.showMessageDialog(null, "Không có dữ liệu để tạo Sớ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -620,15 +680,19 @@ public class MotalListProcessingHelper {
 	    }
 
 	    try {
+	        // Lấy thư mục chứa file Excel (ưu tiên) hoặc working directory
+	        String excelFileDirectory = (excelFilePath != null && !excelFilePath.isEmpty())
+	        	? new File(excelFilePath).getParent()
+	        	: System.getProperty("user.dir");
 
 	        // 📌 🛠 Gọi hàm tạo danh sách nhóm SaoHạn
 	        List<SaoHanGroup> saoHanGroups = createSaoHanGroups(mortalObjects);
 
-	        // ✅ File template có sẵn
-	        File templateFile = new File(System.getProperty("user.dir"), "printSoSaoHanTemplate.docx");
+	        // ✅ File template được tìm từ các vị trí ưu tiên
+	        File templateFile = Utils.findTemplateFile("printSoSaoHanTemplate.docx", excelFileDirectory);
 
-	        // ✅ Tạo file đích
-	        String outputFilePath = Utils.getUniqueFileName("printSoSaoHanGenerated.docx");
+	        // ✅ Tạo file đích trong thư mục Excel
+	        String outputFilePath = Utils.getUniqueFileName(excelFileDirectory + "/printSoSaoHanGenerated.docx");
 
 	        // 📌 📝 Ghi file Word từ dữ liệu SaoHạn
 	        writeSoDocument(templateFile, outputFilePath, saoHanGroups);

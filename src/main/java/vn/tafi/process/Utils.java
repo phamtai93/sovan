@@ -22,6 +22,14 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
 
 public class Utils {
 
+	// Template file names
+	private static final String[] TEMPLATE_FILES = {
+		"printCoverTemplate.docx",
+		"printLabelSaoHanTemplate.docx",
+		"printNotebookTemplate.docx",
+		"printSoSaoHanTemplate.docx"
+	};
+
 	public static boolean isEqualIgnoreNull(String str1, String str2) {
 	    return Objects.equals(str1 == null ? "" : str1, str2 == null ? "" : str2);
 	}
@@ -445,6 +453,75 @@ public class Utils {
 
 	    // 🔥 Ghi nội dung vào tài liệu
 	    newRun.setText(textContent);
+	}
+
+	/**
+	 * Tìm file template theo thứ tự ưu tiên:
+	 * 1. Cùng thư mục với file Excel được chọn
+	 * 2. Thư mục cài đặt ứng dụng (nơi JAR/EXE)
+	 * 3. Resources trong JAR
+	 * 4. Working directory
+	 *
+	 * @param templateName Tên file template (ví dụ: "printCoverTemplate.docx")
+	 * @param excelFileDirectory Thư mục chứa file Excel được chọn (hoặc null)
+	 * @return File template được tìm thấy, hoặc null nếu không tìm
+	 */
+	public static File findTemplateFile(String templateName, String excelFileDirectory) {
+		// 1. Tìm ở cùng thư mục với file Excel (ưu tiên cao nhất)
+		if (excelFileDirectory != null && !excelFileDirectory.isEmpty()) {
+			File excelDirTemplate = new File(excelFileDirectory, templateName);
+			if (excelDirTemplate.exists()) {
+				System.out.println("Found template: " + excelDirTemplate.getAbsolutePath());
+				return excelDirTemplate;
+			}
+		}
+
+		// 2. Tìm ở thư mục cài đặt ứng dụng (nơi JAR được cài đặt)
+		try {
+			String jarPath = Utils.class.getProtectionDomain()
+					.getCodeSource().getLocation().getPath();
+			File appDir = new File(jarPath).getParentFile();
+			File appDirTemplate = new File(appDir, templateName);
+			if (appDirTemplate.exists()) {
+				System.out.println("Found template: " + appDirTemplate.getAbsolutePath());
+				return appDirTemplate;
+			}
+		} catch (Exception e) {
+			System.err.println("Error finding app directory: " + e.getMessage());
+		}
+
+		// 3. Tìm trong resources của JAR
+		try {
+			java.io.InputStream resourceStream = Utils.class.getClassLoader()
+					.getResourceAsStream(templateName);
+			if (resourceStream != null) {
+				// Tạo file tạm thời từ resource stream
+				File tempFile = File.createTempFile(templateName.replace(".docx", ""), ".docx");
+				tempFile.deleteOnExit();
+				try (java.io.FileOutputStream fos = new java.io.FileOutputStream(tempFile)) {
+					byte[] buffer = new byte[1024];
+					int length;
+					while ((length = resourceStream.read(buffer)) != -1) {
+						fos.write(buffer, 0, length);
+					}
+				}
+				resourceStream.close();
+				System.out.println("Found template from resources: " + tempFile.getAbsolutePath());
+				return tempFile;
+			}
+		} catch (Exception e) {
+			System.err.println("Error loading template from resources: " + e.getMessage());
+		}
+
+		// 4. Tìm ở working directory (fallback)
+		File workingDirTemplate = new File(System.getProperty("user.dir"), templateName);
+		if (workingDirTemplate.exists()) {
+			System.out.println("Found template: " + workingDirTemplate.getAbsolutePath());
+			return workingDirTemplate;
+		}
+
+		System.err.println("Template not found: " + templateName);
+		return null;
 	}
 
 }
