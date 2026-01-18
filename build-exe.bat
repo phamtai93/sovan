@@ -41,18 +41,16 @@ echo Building Sovan Windows EXE Installer
 echo ====================================
 echo.
 
-REM Step 0: Verify template files exist for packaging
-echo [0/4] Preparing template files...
+REM Step 0: Verify template files exist in resources
+echo [0/4] Verifying template files in resources...
 if not exist "src\main\resources" mkdir "src\main\resources"
 
-REM Copy template files
 set "templates=printCoverTemplate.docx printLabelSaoHanTemplate.docx printNotebookTemplate.docx printSoSaoHanTemplate.docx"
 for %%t in (%templates%) do (
-    if exist "%%t" (
-        copy /Y "%%t" "src\main\resources\%%t" >nul
-        echo [0/4] ✓ %%t copied to resources
+    if exist "src\main\resources\%%t" (
+        echo [0/4] ✓ %%t found in resources
     ) else (
-        echo [0/4] Warning: %%t not found in project root
+        echo [0/4] Warning: %%t not found in src\main\resources
     )
 )
 echo.
@@ -66,19 +64,10 @@ if errorlevel 1 (
 )
 echo [1/4] ✓ JAR built successfully
 
-REM Step 2: Create output directory and copy template files
+REM Step 2: Create output directory
 echo [2/4] Preparing output directory...
 if not exist "target\dist" mkdir "target\dist"
-
-REM Copy template files to target folder
-for %%t in (%templates%) do (
-    if exist "%%t" (
-        copy /Y "%%t" "target\%%t" >nul
-        echo [2/4] ✓ %%t ready for packaging
-    ) else (
-        echo [2/4] Warning: %%t not found
-    )
-)
+echo [2/4] ✓ Output directory ready
 echo.
 
 REM Step 3: Run jpackage
@@ -86,7 +75,8 @@ echo [3/4] Running jpackage to create EXE installer...
 cd target
 
 REM Try with exe first (requires WiX)
-"%JPACKAGE%" --input . --name Sovan --main-jar Sovan-0.0.2-SNAPSHOT.jar --main-class vn.tafi.process.MainUIProcessor --type exe --vendor TAFI --app-version 0.0.2 --win-menu --win-menu-group TAFI --win-shortcut --resource-dir . --dest dist  --icon classes/images/app.ico
+REM resource-dir points to classes folder where Maven compiled resources (App.config, templates, icons)
+"%JPACKAGE%" --input . --name Sovan --main-jar Sovan-0.0.2-SNAPSHOT.jar --main-class vn.tafi.process.MainUIProcessor --type exe --vendor TAFI --app-version 0.0.2 --win-menu --win-menu-group TAFI --win-shortcut --resource-dir classes --dest dist --icon classes/images/app.ico
 set EXE_RESULT=%errorlevel%
 
 if %EXE_RESULT% neq 0 (
@@ -95,8 +85,8 @@ if %EXE_RESULT% neq 0 (
     echo Download WiX from: https://wixtoolset.org
     echo.
 
-    REM Fallback to app-image (also includes App.config via resource-dir)
-    "%JPACKAGE%" --input . --name Sovan --main-jar Sovan-0.0.2-SNAPSHOT.jar --main-class vn.tafi.process.MainUIProcessor --type app-image --vendor TAFI --app-version 0.0.2 --resource-dir . --dest dist  --icon classes/images/app.ico
+    REM Fallback to app-image (also includes App.config and templates via resource-dir)
+    "%JPACKAGE%" --input . --name Sovan --main-jar Sovan-0.0.2-SNAPSHOT.jar --main-class vn.tafi.process.MainUIProcessor --type app-image --vendor TAFI --app-version 0.0.2 --resource-dir classes --dest dist --icon classes/images/app.ico
 
     if errorlevel 1 (
         echo Error: jpackage app-image creation failed

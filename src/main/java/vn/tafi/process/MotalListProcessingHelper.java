@@ -326,29 +326,45 @@ public class MotalListProcessingHelper {
 				document.getDocument().getBody().addNewSectPr().set(sectPr);
 			}
 
-			for (int i = 0; i < mortalObjects.size(); i++) {
+		// Lấy số nhãn cho mỗi mortal object từ config
+		int labelsPerMortal = 2; // Default value
+		try {
+			String labelsPerMortalStr = ConfigLoader.getProperty("labelsPerMortalObject");
+			if (labelsPerMortalStr != null && !labelsPerMortalStr.isEmpty()) {
+				labelsPerMortal = Integer.parseInt(labelsPerMortalStr);
+			}
+		} catch (NumberFormatException e) {
+			System.err.println("Invalid labelsPerMortalObject config: " + e.getMessage());
+		}
+
+		int pageCounter = 0;
+		for (int i = 0; i < mortalObjects.size(); i++) {
 				MortalObject obj = mortalObjects.get(i);
 				String labelContent = String.format(ConfigLoader.getProperty("labelSaoHanTemplate"),
 						String.join(" ", obj.getFmName(), obj.getMidName(), obj.getName()).trim(),
 						String.join(" ", obj.getThienCan(), obj.getDiaChi()).trim(), obj.getAgeRecalculated(),
 						obj.getSaoRecalculated().getSaoName(), obj.getHanRecalculated().getHanName());
 
-				// Tạo đoạn văn bản ở đầu trang
-				XWPFParagraph paragraph = document.createParagraph();
+				// Tạo 2 trang cho mỗi mortal object
+				for (int pageNum = 0; pageNum < labelsPerMortal; pageNum++) {
+					// Tạo đoạn văn bản ở đầu trang
+					XWPFParagraph paragraph = document.createParagraph();
 
-				// Nếu không phải trang đầu tiên, thêm page break trực tiếp vào paragraph chứa
-				// nội dung
-				if (i > 0) {
-					paragraph.setPageBreak(true);
+					// Nếu không phải trang đầu tiên, thêm page break
+					if (pageCounter > 0) {
+						paragraph.setPageBreak(true);
+					}
+
+					paragraph.setAlignment(ParagraphAlignment.CENTER);
+
+					XWPFRun run = paragraph.createRun();
+					run.setText(labelContent);
+					run.setFontFamily("Calibri");
+					run.setFontSize(13);
+					run.setBold(true);
+
+					pageCounter++;
 				}
-
-				paragraph.setAlignment(ParagraphAlignment.CENTER);
-
-				XWPFRun run = paragraph.createRun();
-				run.setText(labelContent);
-				run.setFontFamily("Calibri");
-				run.setFontSize(13);
-				run.setBold(true);
 			}
 
 			// Ghi ra file mới
