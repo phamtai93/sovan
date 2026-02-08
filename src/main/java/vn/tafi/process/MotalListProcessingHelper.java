@@ -204,9 +204,9 @@ public class MotalListProcessingHelper {
 				? new File(excelFilePath).getParent()
 				: System.getProperty("user.dir");
 
-			String saoHanTemplatePath = Utils.findTemplateFile("printLabelSaoHanTemplate.docx", excelFileDirectory).getAbsolutePath();
-			String coverTemplatePath = Utils.findTemplateFile("printCoverTemplate.docx", excelFileDirectory).getAbsolutePath();
-			String noteTemplatePath = Utils.findTemplateFile("printNotebookTemplate.docx", excelFileDirectory).getAbsolutePath();
+			String saoHanTemplatePath = Utils.findTemplateFile(Utils.TemplateFile.LABEL_SAO_HAN, excelFileDirectory).getAbsolutePath();
+			String coverTemplatePath = Utils.findTemplateFile(Utils.TemplateFile.COVER, excelFileDirectory).getAbsolutePath();
+			String noteTemplatePath = Utils.findTemplateFile(Utils.TemplateFile.NOTEBOOK, excelFileDirectory).getAbsolutePath();
 			String outputDir = excelFileDirectory;
 
 			generateLabelWordFiles(saoHanTemplatePath, coverTemplatePath, noteTemplatePath, outputDir, mortalObjects,
@@ -705,7 +705,7 @@ public class MotalListProcessingHelper {
 	        List<SaoHanGroup> saoHanGroups = createSaoHanGroups(mortalObjects);
 
 	        // ✅ File template được tìm từ các vị trí ưu tiên
-	        File templateFile = Utils.findTemplateFile("printSoSaoHanTemplate.docx", excelFileDirectory);
+	        File templateFile = Utils.findTemplateFile(Utils.TemplateFile.SO_SAO_HAN, excelFileDirectory);
 
 	        // ✅ Tạo file đích trong thư mục Excel
 	        String outputFilePath = Utils.getUniqueFileName(excelFileDirectory + "/printSoSaoHanGenerated.docx");

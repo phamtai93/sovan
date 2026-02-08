@@ -6,6 +6,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
+import vn.tafi.object.DiaChi;
+import vn.tafi.object.ThienCan;
+
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellValue;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
@@ -22,13 +25,53 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
 
 public class Utils {
 
-	// Template file names
-	private static final String[] TEMPLATE_FILES = {
-		"printCoverTemplate.docx",
-		"printLabelSaoHanTemplate.docx",
-		"printNotebookTemplate.docx",
-		"printSoSaoHanTemplate.docx"
-	};
+
+	/**
+	 * Enum for template files with their names
+	 */
+	public enum TemplateFile {
+		COVER("printCoverTemplate.docx"),
+		LABEL_SAO_HAN("printLabelSaoHanTemplate.docx"),
+		NOTEBOOK("printNotebookTemplate.docx"),
+		SO_SAO_HAN("printSoSaoHanTemplate.docx");
+
+		private final String fileName;
+
+		TemplateFile(String fileName) {
+			this.fileName = fileName;
+		}
+
+		public String getFileName() {
+			return fileName;
+		}
+	}
+
+	/**
+	 * Tính toán Can Giáp từ năm Tây lịch
+	 * Can Giáp = (Thiên Can) + (Địa Chi) dựa trên vòng 60 năm
+	 *
+	 * Công thức:
+	 * - Mỗi năm trôi qua tăng 1 Thiên Can và 1 Địa Chi
+	 * - Tham chiếu: 1945 = Ất Dậu (Can index 1, Chi index 9)
+	 *
+	 * @param year năm Tây lịch (ví dụ: 2026)
+	 * @return Can Giáp dưới dạng String (ví dụ: "Bính Ngọ")
+	 */
+	public static String calculateCanChiYear(int year) {
+		// Sử dụng năm 1945 (Ất Dậu) làm tham chiếu
+		int yearsFrom1945 = year - 1945;
+		int canIndex = (1 + yearsFrom1945) % 10;
+		int chiIndex = (9 + yearsFrom1945) % 12;
+
+		// Đảm bảo index không âm
+		if (canIndex < 0) canIndex += 10;
+		if (chiIndex < 0) chiIndex += 12;
+
+		ThienCan can = ThienCan.fromIndex(canIndex);
+		DiaChi chi = DiaChi.fromIndex(chiIndex);
+
+		return can.getDisplayName() + " " + chi.getDisplayName();
+	}
 
 	public static boolean isEqualIgnoreNull(String str1, String str2) {
 	    return Objects.equals(str1 == null ? "" : str1, str2 == null ? "" : str2);
@@ -453,6 +496,21 @@ public class Utils {
 
 	    // 🔥 Ghi nội dung vào tài liệu
 	    newRun.setText(textContent);
+	}
+
+	/**
+	 * Tìm file template theo thứ tự ưu tiên sử dụng enum:
+	 * 1. Cùng thư mục với file Excel được chọn
+	 * 2. Thư mục cài đặt ứng dụng (nơi JAR/EXE)
+	 * 3. Resources trong JAR
+	 * 4. Working directory
+	 *
+	 * @param template TemplateFile enum value
+	 * @param excelFileDirectory Thư mục chứa file Excel được chọn (hoặc null)
+	 * @return File template được tìm thấy, hoặc null nếu không tìm
+	 */
+	public static File findTemplateFile(TemplateFile template, String excelFileDirectory) {
+		return findTemplateFile(template.getFileName(), excelFileDirectory);
 	}
 
 	/**

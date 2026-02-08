@@ -121,10 +121,25 @@ public class MainUIProcessor {
 	}
 
 	/**
+	 * Cập nhật title của frame với năm và Can Giáp từ config
+	 */
+	private static void updateFrameTitle(JFrame frame) {
+		try {
+			String year = ConfigLoader.getProperty("year");
+			String lunaYear = ConfigLoader.getProperty("lunaYear");
+			String title = String.format("PHẦN MỀM HỖ TRỢ LÀM SỚ (%s - %s)", year, lunaYear);
+			frame.setTitle(title);
+		} catch (Exception e) {
+			System.err.println("Error updating frame title: " + e.getMessage());
+			frame.setTitle("PHẦN MỀM HỖ TRỢ LÀM SỚ");
+		}
+	}
+
+	/**
 	 * Tạo giao diện chính của app
 	 */
 	private static void createAndShowGUI() {
-		JFrame frame = new JFrame("PHẦN MỀM HỖ TRỢ LÀM SỚ");
+		JFrame frame = new JFrame();
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setSize(750, 650);
 		frame.setLocation(180, 150);
@@ -142,6 +157,9 @@ public class MainUIProcessor {
 			System.exit(1); // Ngưng chương trình nếu không tải được config
 		}
 
+		// Update frame title with current config values
+		updateFrameTitle(frame);
+
 		// Tạo TabbedPane
 		JTabbedPane tabbedPane = new JTabbedPane();
 		// tabbedPane.setPreferredSize(new Dimension(700, 350));
@@ -155,6 +173,17 @@ public class MainUIProcessor {
 		JPanel saoHanTab = createBackgroundPanel("/images/background_2.png");
 		saoHanTab.add(createSaoHanPanel(frame));
 		tabbedPane.addTab("Hỗ trợ Sao Hạn", saoHanTab);
+
+		// Tạo Tab "Cài đặt"
+		JPanel settingsTab = createBackgroundPanel("/images/background_1.png");
+		settingsTab.add(SettingsPanel.createSettingsPanel(frame));
+		try {
+			FlatSVGIcon settingsIcon = new FlatSVGIcon("icons/config.svg", 16, 16);
+			tabbedPane.addTab("Cài đặt", settingsIcon, settingsTab);
+		} catch (Exception e) {
+			System.err.println("Could not load settings icon: " + e.getMessage());
+			tabbedPane.addTab("Cài đặt", settingsTab);
+		}
 
 		// Style TabbedPane - làm tab header có màu đậm hơn background
 		styleTabbedPane(tabbedPane);

@@ -102,4 +102,10 @@ public class ConfigLoader {
 		return properties.containsKey(key);
 	}
 
+	// Hàm cập nhật giá trị property trong bộ nhớ
+	public static void setProperty(String key, String value) {
+		properties.put(key, value);
+		System.out.println("✅ Updated property in memory: " + key + " = " + value);
+	}
+
 }
