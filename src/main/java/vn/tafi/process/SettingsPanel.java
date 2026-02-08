@@ -72,7 +72,7 @@ public class SettingsPanel {
 		JSpinner.NumberEditor editor = new JSpinner.NumberEditor(yearSpinner, "0");
 		yearSpinner.setEditor(editor);
 
-		styleSpinner(yearSpinner);
+		Utils.styleSpinner(yearSpinner);
 		settingsContainer.add(yearSpinner, gbc);
 
 		// Luna Year (Can Giáp)
@@ -88,7 +88,7 @@ public class SettingsPanel {
 		String calculatedCanChi = Utils.calculateCanChiYear(currentYear);
 		JTextField lunaTextField = new JTextField(calculatedCanChi, 20);
 		lunaTextField.setEditable(false); // Không cho phép nhập, chỉ đọc
-		styleTextField(lunaTextField);
+		Utils.styleTextField(lunaTextField);
 		settingsContainer.add(lunaTextField, gbc);
 
 		// Thêm listener để tự động cập nhật Can Giáp khi thay đổi năm
@@ -107,7 +107,7 @@ public class SettingsPanel {
 		gbc.gridwidth = 1;
 		gbc.insets = new Insets(20, 10, 10, 10);
 		JButton saveButton = new JButton("💾   Lưu cài đặt");
-		styleButton(saveButton);
+		Utils.styleButton(saveButton);
 		saveButton.addActionListener(e -> {
 			handleSaveSettings(yearSpinner, lunaTextField, parentFrame);
 		});
@@ -116,7 +116,7 @@ public class SettingsPanel {
 		// Reset Button
 		gbc.gridx = 1;
 		JButton resetButton = new JButton("⟲   Hủy và tải lại");
-		styleButton(resetButton);
+		Utils.styleButton(resetButton);
 		resetButton.setBackground(new Color(108, 117, 125)); // Gray
 		resetButton.addActionListener(e -> {
 			handleResetSettings(yearSpinner, lunaTextField);
@@ -164,7 +164,7 @@ public class SettingsPanel {
 
 			// Can Giáp được tính tự động, không cần validation
 			if (lunaYear.isEmpty()) {
-				showMessageWithFont("Lỗi: Không thể tính Can Giáp cho năm này!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+				Utils.showMessageWithFont("Lỗi: Không thể tính Can Giáp cho năm này!", "Lỗi", JOptionPane.ERROR_MESSAGE);
 				return;
 			}
 
@@ -178,10 +178,10 @@ public class SettingsPanel {
 			// Update frame title
 			updateFrameTitle(parentFrame);
 
-			showMessageWithFont("✅ Cấu hình đã được lưu thành công!", "Thành công",
+			Utils.showMessageWithFont("✅ Cấu hình đã được lưu thành công!", "Thành công",
 					JOptionPane.INFORMATION_MESSAGE);
 		} catch (Exception e) {
-			showMessageWithFont("❌ Lỗi khi lưu cấu hình: " + e.getMessage(), "Lỗi",
+			Utils.showMessageWithFont("❌ Lỗi khi lưu cấu hình: " + e.getMessage(), "Lỗi",
 					JOptionPane.ERROR_MESSAGE);
 			e.printStackTrace();
 		}
@@ -204,10 +204,10 @@ public class SettingsPanel {
 			String canChi = Utils.calculateCanChiYear(currentYear);
 			lunaTextField.setText(canChi);
 
-			showMessageWithFont("✅ Đã tải lại cấu hình gốc!", "Thành công",
+			Utils.showMessageWithFont("✅ Đã tải lại cấu hình gốc!", "Thành công",
 					JOptionPane.INFORMATION_MESSAGE);
 		} catch (Exception e) {
-			showMessageWithFont("❌ Lỗi khi tải lại cấu hình: " + e.getMessage(), "Lỗi",
+			Utils.showMessageWithFont("❌ Lỗi khi tải lại cấu hình: " + e.getMessage(), "Lỗi",
 					JOptionPane.ERROR_MESSAGE);
 			e.printStackTrace();
 		}
@@ -298,42 +298,6 @@ public class SettingsPanel {
 	}
 
 	/**
-	 * Style JSpinner
-	 */
-	private static void styleSpinner(JSpinner spinner) {
-		spinner.setFont(new Font("Calibri", Font.PLAIN, 14));
-		spinner.setBackground(java.awt.Color.WHITE);
-		spinner.setForeground(new Color(30, 35, 40));
-	}
-
-	/**
-	 * Style JTextField
-	 */
-	private static void styleTextField(JTextField textField) {
-		textField.setFont(new Font("Arial Unicode MS", Font.PLAIN, 14));
-		textField.setForeground(new Color(30, 35, 40));
-		textField.setBackground(java.awt.Color.WHITE);
-		textField.setMargin(new Insets(6, 8, 6, 8));
-		textField.setBorder(BorderFactory.createCompoundBorder(
-				BorderFactory.createLineBorder(new Color(180, 195, 210), 1),
-				BorderFactory.createEmptyBorder(4, 6, 4, 6)));
-	}
-
-	/**
-	 * Style Button
-	 */
-	private static void styleButton(JButton button) {
-		button.setFont(new Font("Arial Unicode MS", Font.PLAIN, 16));
-		button.setFocusPainted(false);
-		button.setMargin(new Insets(8, 15, 8, 15));
-		button.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-		button.setBackground(new Color(40, 167, 69)); // Green
-		button.setForeground(java.awt.Color.WHITE);
-		button.setOpaque(true);
-		button.setBorderPainted(true);
-	}
-
-	/**
 	 * Cập nhật title của frame với năm và Can Giáp từ config
 	 */
 	private static void updateFrameTitle(javax.swing.JFrame frame) {
@@ -346,15 +310,5 @@ public class SettingsPanel {
 			System.err.println("Error updating frame title: " + e.getMessage());
 			frame.setTitle("PHẦN MỀM HỖ TRỢ LÀM SỚ");
 		}
-	}
-
-	/**
-	 * Hiển thị message dialog với custom font
-	 */
-	private static void showMessageWithFont(String message, String title, int messageType) {
-		JLabel label = new JLabel(message);
-		label.setFont(new Font("Arial Unicode MS", Font.PLAIN, 14));
-		label.setForeground(new Color(230, 235, 240)); // Light gray, gần trắng
-		JOptionPane.showMessageDialog(null, label, title, messageType);
 	}
 }

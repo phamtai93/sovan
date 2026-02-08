@@ -1,10 +1,20 @@
 package vn.tafi.process;
 
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Insets;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JSpinner;
+import javax.swing.JTextField;
 
 import vn.tafi.object.DiaChi;
 import vn.tafi.object.ThienCan;
@@ -580,6 +590,62 @@ public class Utils {
 
 		System.err.println("Template not found: " + templateName);
 		return null;
+	}
+
+	// ============================================================================
+	// UI STYLING HELPERS - Centralized styling methods for consistent UI appearance
+	// ============================================================================
+
+	/**
+	 * Style JSpinner with standard appearance
+	 * @param spinner The JSpinner component to style
+	 */
+	public static void styleSpinner(JSpinner spinner) {
+		spinner.setFont(new Font("Calibri", Font.PLAIN, 14));
+		spinner.setBackground(java.awt.Color.WHITE);
+		spinner.setForeground(new Color(30, 35, 40));
+	}
+
+	/**
+	 * Style JTextField with standard appearance
+	 * @param textField The JTextField component to style
+	 */
+	public static void styleTextField(JTextField textField) {
+		textField.setFont(new Font("Arial Unicode MS", Font.PLAIN, 14));
+		textField.setForeground(new Color(30, 35, 40));
+		textField.setBackground(java.awt.Color.WHITE);
+		textField.setMargin(new Insets(6, 8, 6, 8));
+		textField.setBorder(BorderFactory.createCompoundBorder(
+				BorderFactory.createLineBorder(new Color(180, 195, 210), 1),
+				BorderFactory.createEmptyBorder(4, 6, 4, 6)));
+	}
+
+	/**
+	 * Style JButton with standard appearance
+	 * @param button The JButton component to style
+	 */
+	public static void styleButton(JButton button) {
+		button.setFont(new Font("Arial Unicode MS", Font.PLAIN, 16));
+		button.setFocusPainted(false);
+		button.setMargin(new Insets(8, 15, 8, 15));
+		button.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+		button.setBackground(new Color(40, 167, 69)); // Green
+		button.setForeground(java.awt.Color.WHITE);
+		button.setOpaque(true);
+		button.setBorderPainted(true);
+	}
+
+	/**
+	 * Display message dialog with custom styled font
+	 * @param message The message text to display
+	 * @param title The dialog title
+	 * @param messageType The type of message (JOptionPane.ERROR_MESSAGE, INFORMATION_MESSAGE, etc.)
+	 */
+	public static void showMessageWithFont(String message, String title, int messageType) {
+		JLabel label = new JLabel(message);
+		label.setFont(new Font("Arial Unicode MS", Font.PLAIN, 14));
+		label.setForeground(new Color(230, 235, 240)); // Light gray, gần trắng
+		JOptionPane.showMessageDialog(null, label, title, messageType);
 	}
 
 }

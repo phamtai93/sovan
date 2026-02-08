@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -35,7 +36,7 @@ public class ContentDocProcessingHelper {
 	public static void processFormatVietChar(JPanel fileListPanel, JTextArea logArea, Map<String, String> filePathMap) {
 		Component[] fileLabels = fileListPanel.getComponents();
 		if (fileLabels.length == 0) {
-			JOptionPane.showMessageDialog(null, "Hãy chọn file trước khi nhấn Cập nhật.", "Lỗi",
+			Utils.showMessageWithFont("Hãy chọn file trước khi nhấn Cập nhật.", "Lỗi",
 					JOptionPane.ERROR_MESSAGE);
 			return;
 		}
@@ -143,7 +144,7 @@ public class ContentDocProcessingHelper {
 			Map<String, String> filePathMap) {
 		Component[] fileLabels = fileListPanel.getComponents();
 		if (fileLabels.length == 0) {
-			JOptionPane.showMessageDialog(null, "Hãy chọn file trước khi nhấn Cập nhật.", "Lỗi",
+			Utils.showMessageWithFont("Hãy chọn file trước khi nhấn Cập nhật.", "Lỗi",
 					JOptionPane.ERROR_MESSAGE);
 			return;
 		}
@@ -161,6 +162,7 @@ public class ContentDocProcessingHelper {
 			JPanel inputPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 			JLabel inputLabel = new JLabel("Năm: ");
 			JTextField yearOfFileField = new JTextField(10);
+			Utils.styleTextField(yearOfFileField);
 			inputPanel.add(inputLabel);
 			inputPanel.add(yearOfFileField);
 
@@ -181,7 +183,7 @@ public class ContentDocProcessingHelper {
 					try {
 						yearOfFile = Integer.parseInt(inputText);
 					} catch (NumberFormatException ex) {
-						JOptionPane.showMessageDialog(null, "Vui lòng nhập số nguyên hợp lệ.", "Lỗi",
+						Utils.showMessageWithFont("Vui lòng nhập số nguyên hợp lệ.", "Lỗi",
 								JOptionPane.ERROR_MESSAGE);
 						return; // Không tiếp tục nếu nhập sai
 					}
@@ -193,7 +195,7 @@ public class ContentDocProcessingHelper {
 			
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			JOptionPane.showMessageDialog(null, "Lỗi xử lý file: " + ex.getMessage(), "Error",
+			Utils.showMessageWithFont("Lỗi xử lý file: " + ex.getMessage(), "Lỗi",
 					JOptionPane.ERROR_MESSAGE);
 		}
 	}
@@ -203,7 +205,7 @@ public class ContentDocProcessingHelper {
 		String yearStr = ConfigLoader.getProperty("year");
 		String lunaYearStr = ConfigLoader.getProperty("lunaYear");
 		if (yearStr == null || yearStr.isEmpty() || lunaYearStr == null || lunaYearStr.isEmpty()) {
-			JOptionPane.showMessageDialog(null, "File cấu hình phải có \"year\" và \"lunaYearStr\"!", "Error",
+			Utils.showMessageWithFont("File cấu hình phải có \"year\" và \"lunaYearStr\"!", "Lỗi",
 					JOptionPane.ERROR_MESSAGE);
 			return;
 		}
@@ -214,12 +216,17 @@ public class ContentDocProcessingHelper {
 		String vietnameseNumerals = Utils.convertNumberToVietnamese(buddhistYear);
 
 		StringBuilder logs = new StringBuilder();
+		Map<String, String> processedFiles = new HashMap<>(); // Track original -> updated file paths
+
 		for (Component comp : fileLabels) {
 			if (comp instanceof JLabel) {
 				String fileName = ((JLabel) comp).getText();
 				String filePath = filePathMap.get(fileName);
 				if (filePath != null) {
 					String outputFilePath = Utils.getUniqueFileName(filePath.replace(".docx", "_updated.docx"));
+					// Store file pair for later file operations
+					processedFiles.put(filePath, outputFilePath);
+
 					// Process age update
 					logs.append(processUpdatingAgeIntext(filePath, outputFilePath, buddhistYear, yearOfFile)).append("\n");
 
@@ -235,6 +242,32 @@ public class ContentDocProcessingHelper {
 			}
 		}
 		logArea.setText(logs.toString());
+
+		// Display file replacement dialog with 3 options
+		String[] options = { "Không", "Có, dùng tên mới", "Có, dùng lại tên cũ" };
+		int choice = JOptionPane.showOptionDialog(
+				null,
+				"Bạn có muốn thay thế các file cũ bằng các file mới không?",
+				"Xác nhận thay thế file",
+				JOptionPane.YES_NO_CANCEL_OPTION,
+				JOptionPane.QUESTION_MESSAGE,
+				null,
+				options,
+				options[0]  // Default: "Không"
+		);
+
+		// Handle user choice
+		if (choice == 0) {
+			// "Không" - Do nothing, keep both old and new files
+			// Dialog closes automatically
+		} else if (choice == 1) {
+			// "Có, dùng tên mới" - Delete old files, keep new files with "_updated"
+			handleDeleteOldFiles(processedFiles);
+		} else if (choice == 2) {
+			// "Có, dùng lại tên cũ" - Delete old files, rename new files to original names
+			handleRenameToOriginalNames(processedFiles);
+		}
+		// If user closes dialog (choice == -1), do nothing
 	}
 
 	private static String processUpdatingAgeIntext(String filePath, String outputFilePath, int buddhistYear,
@@ -402,6 +435,90 @@ public class ContentDocProcessingHelper {
 			document.write(out);
 		}
 		document.close();
+	}
+
+	/**
+	 * Xóa các file cũ, giữ lại các file mới với hậu tố "_updated"
+	 * @param processedFiles Map<originalPath, updatedPath>
+	 */
+	private static void handleDeleteOldFiles(Map<String, String> processedFiles) {
+		try {
+			int deletedCount = 0;
+			for (String originalPath : processedFiles.keySet()) {
+				File oldFile = new File(originalPath);
+				if (oldFile.exists()) {
+					if (oldFile.delete()) {
+						deletedCount++;
+					}
+				}
+			}
+			Utils.showMessageWithFont(
+					"✅ Đã xóa " + deletedCount + " file cũ. Các file mới được giữ lại với hậu tố \"_updated\".",
+					"Thành công",
+					JOptionPane.INFORMATION_MESSAGE);
+		} catch (Exception e) {
+			Utils.showMessageWithFont(
+					"❌ Lỗi khi xóa file cũ: " + e.getMessage(),
+					"Lỗi",
+					JOptionPane.ERROR_MESSAGE);
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Xóa các file cũ và đổi tên các file mới thành tên cũ (xóa hậu tố "_updated")
+	 * @param processedFiles Map<originalPath, updatedPath>
+	 */
+	private static void handleRenameToOriginalNames(Map<String, String> processedFiles) {
+		try {
+			int renamedCount = 0;
+			int failedCount = 0;
+
+			for (Map.Entry<String, String> entry : processedFiles.entrySet()) {
+				String originalPath = entry.getKey();
+				String updatedPath = entry.getValue();
+
+				File oldFile = new File(originalPath);
+				File newFile = new File(updatedPath);
+
+				try {
+					// Delete old file
+					if (oldFile.exists()) {
+						oldFile.delete();
+					}
+
+					// Rename new file to original name
+					if (newFile.exists()) {
+						if (newFile.renameTo(oldFile)) {
+							renamedCount++;
+						} else {
+							failedCount++;
+						}
+					}
+				} catch (Exception e) {
+					failedCount++;
+					System.err.println("Lỗi khi xử lý file " + originalPath + ": " + e.getMessage());
+				}
+			}
+
+			if (failedCount == 0) {
+				Utils.showMessageWithFont(
+						"✅ Đã cập nhật thành công " + renamedCount + " file. Các file được đổi tên về tên gốc.",
+						"Thành công",
+						JOptionPane.INFORMATION_MESSAGE);
+			} else {
+				Utils.showMessageWithFont(
+						"⚠️  Đã cập nhật " + renamedCount + " file, nhưng " + failedCount + " file bị lỗi.",
+						"Cảnh báo",
+						JOptionPane.WARNING_MESSAGE);
+			}
+		} catch (Exception e) {
+			Utils.showMessageWithFont(
+					"❌ Lỗi khi cập nhật file: " + e.getMessage(),
+					"Lỗi",
+					JOptionPane.ERROR_MESSAGE);
+			e.printStackTrace();
+		}
 	}
 
 }
