@@ -175,12 +175,24 @@ public class MainUIProcessor {
 		// Tạo Tab "Cập nhật tuổi"
 		JPanel updateAgeTab = createBackgroundPanel("/images/background_1.png");
 		updateAgeTab.add(createUpdateAgePanel());
-		tabbedPane.addTab("Cập nhật tuổi", updateAgeTab);
+		try {
+			FlatSVGIcon updateAgeIcon = new FlatSVGIcon("icons/calendar-user.svg", 16, 16);
+			tabbedPane.addTab("Cập nhật tuổi", updateAgeIcon, updateAgeTab);
+		} catch (Exception e) {
+			System.err.println("Could not load calendar-user icon: " + e.getMessage());
+			tabbedPane.addTab("Cập nhật tuổi", updateAgeTab);
+		}
 
 		// Tạo Tab "Hỗ trợ Sao Hạn"
 		JPanel saoHanTab = createBackgroundPanel("/images/background_2.png");
 		saoHanTab.add(createSaoHanPanel(frame));
-		tabbedPane.addTab("Hỗ trợ Sao Hạn", saoHanTab);
+		try {
+			FlatSVGIcon saoHanIcon = new FlatSVGIcon("icons/star-fall.svg", 16, 16);
+			tabbedPane.addTab("Hỗ trợ Sao Hạn", saoHanIcon, saoHanTab);
+		} catch (Exception e) {
+			System.err.println("Could not load star-fall icon: " + e.getMessage());
+			tabbedPane.addTab("Hỗ trợ Sao Hạn", saoHanTab);
+		}
 
 		// Tạo Tab "Cài đặt"
 		JPanel settingsTab = createBackgroundPanel("/images/background_1.png");
