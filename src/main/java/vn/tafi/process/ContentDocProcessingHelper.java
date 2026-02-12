@@ -114,24 +114,31 @@ public class ContentDocProcessingHelper {
 		int returnValue = fileChooser.showOpenDialog(null);
 		if (returnValue == JFileChooser.APPROVE_OPTION) {
 			File[] selectedFiles = fileChooser.getSelectedFiles();
-			fileListPanel.removeAll(); // Clear the previous file list
-			filePathMap.clear(); // Clear the stored paths
-			if (selectedFiles.length > 0) {
-				fileLabel.setText("");
-				for (File file : selectedFiles) {
-					// Store file name and path
-					filePathMap.put(file.getName(), file.getAbsolutePath());
-					JLabel fileNameLabel = new JLabel(file.getName());
-					// Add spacing between items
-					fileNameLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
-					fileListPanel.add(fileNameLabel);
-				}
-			} else {
-				fileLabel.setText("Chưa chọn file! (Bạn có thể chọn nhiều file cùng lúc)");
-			}
-			fileListPanel.revalidate();
-			fileListPanel.repaint();
+			addFilesToPanel(selectedFiles, fileLabel, fileListPanel, filePathMap);
 		}
+	}
+
+	/**
+	 * Helper: Add files to the file list panel (used by both JFileChooser and drag-and-drop)
+	 */
+	static void addFilesToPanel(File[] files, JLabel fileLabel, JPanel fileListPanel, Map<String, String> filePathMap) {
+		fileListPanel.removeAll(); // Clear the previous file list
+		filePathMap.clear(); // Clear the stored paths
+		if (files.length > 0) {
+			fileLabel.setText("");
+			for (File file : files) {
+				// Store file name and path
+				filePathMap.put(file.getName(), file.getAbsolutePath());
+				JLabel fileNameLabel = new JLabel(file.getName());
+				// Add spacing between items
+				fileNameLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
+				fileListPanel.add(fileNameLabel);
+			}
+		} else {
+			fileLabel.setText("Chưa chọn file! (Bạn có thể chọn nhiều file cùng lúc)");
+		}
+		fileListPanel.revalidate();
+		fileListPanel.repaint();
 	}
 
 	/**

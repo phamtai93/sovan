@@ -9,6 +9,14 @@ import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.Insets;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetDragEvent;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.DropTargetEvent;
+import java.awt.dnd.DropTargetListener;
+import java.awt.datatransfer.DataFlavor;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -221,6 +229,7 @@ public class MainUIProcessor {
 		styleButton(resetButton, "danger", "icons/x.svg");
 
 		buttonPanel.setOpaque(false);
+		buttonPanel.setAlignmentX(java.awt.Component.CENTER_ALIGNMENT);
 		buttonPanel.add(selectFileButton);
 		buttonPanel.add(checkSaoHanButton);
 		buttonPanel.add(createLabelButton);
@@ -230,12 +239,18 @@ public class MainUIProcessor {
 		// Label hiển thị tên file đã chọn
 		JLabel fileLabel = new JLabel("Chưa chọn file! (chỉ chọn 1 file Excel)", JLabel.CENTER);
 		fileLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+		fileLabel.setAlignmentX(java.awt.Component.CENTER_ALIGNMENT);
 		styleLabel(fileLabel, "info");
+
+		// Create drop zone for drag-and-drop (single file)
+		DropZonePanel dropZone = createDropZone("Kéo thả file .xlsx vào đây hoặc nhấn CHỌN FILE");
+		dropZone.setAlignmentX(java.awt.Component.CENTER_ALIGNMENT);
 
 		// Ghi chú hướng dẫn nhập dòng
 		JLabel guideLabel = new JLabel("Hãy xác nhận dòng bắt đầu và dòng kết thúc chứa thông tin cần xử lý!",
 				JLabel.CENTER);
 		guideLabel.setVisible(false); // Ẩn ban đầu
+		guideLabel.setAlignmentX(java.awt.Component.CENTER_ALIGNMENT);
 		styleLabel(guideLabel, "warning");
 
 		// Panel chứa nhập số
@@ -286,6 +301,55 @@ public class MainUIProcessor {
 			}
 		});
 
+		// Setup drag-and-drop for single file (SaoHan tab)
+		new DropTarget(dropZone, DnDConstants.ACTION_COPY, new DropTargetListener() {
+			@Override
+			public void dragEnter(DropTargetDragEvent dtde) {
+				dropZone.setDragOver(true);
+			}
+
+			@Override
+			public void dragOver(DropTargetDragEvent dtde) {
+			}
+
+			@Override
+			public void dropActionChanged(DropTargetDragEvent dtde) {
+			}
+
+			@Override
+			public void dragExit(DropTargetEvent dte) {
+				dropZone.setDragOver(false);
+			}
+
+			@Override
+			public void drop(DropTargetDropEvent dtde) {
+				try {
+					dropZone.setDragOver(false);
+
+					if (dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+						dtde.acceptDrop(DnDConstants.ACTION_COPY);
+						@SuppressWarnings("unchecked")
+						List<File> files = (List<File>) dtde.getTransferable()
+								.getTransferData(DataFlavor.javaFileListFlavor);
+
+						if (files.size() > 0) {
+							File file = files.get(0); // Take first file only (single-file mode)
+							if (file.getName().endsWith(".xls") || file.getName().endsWith(".xlsx")) {
+								MotalListProcessingHelper.applySelectedFile(file, fileLabel, guideLabel,
+										inputPanel, startField, endField, selectedFilePath);
+							}
+						}
+						dtde.dropComplete(true);
+					} else {
+						dtde.rejectDrop();
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+					dtde.rejectDrop();
+				}
+			}
+		}, true);
+
 		/* Phần xử lý nút chọn file danh sách đệ tử **/
 		selectFileButton.addActionListener(e -> {
 			MotalListProcessingHelper.processSelectListMotalFile(
@@ -334,11 +398,13 @@ public class MainUIProcessor {
 		});
 
 		// Panel chứa dãy nút và label
-		JPanel topPanel = new JPanel(new BorderLayout());
-		topPanel.add(buttonPanel, BorderLayout.NORTH);
-		topPanel.add(fileLabel, BorderLayout.CENTER);
-		topPanel.add(guideLabel, BorderLayout.SOUTH);
+		JPanel topPanel = new JPanel();
+		topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
 		topPanel.setOpaque(false);
+		topPanel.add(buttonPanel);
+		topPanel.add(fileLabel);
+		topPanel.add(dropZone);
+		topPanel.add(guideLabel);
 
 		// Create main center container
 		JPanel mainCenterPanel = new JPanel();
@@ -492,6 +558,61 @@ public class MainUIProcessor {
 	}
 
 	/**
+	 * Custom JPanel for drop zone with drag-over highlight effect
+	 */
+	private static class DropZonePanel extends JPanel {
+		private static final long serialVersionUID = 1L;
+		private boolean isDragOver = false;
+		private final Color normalBorderColor = new Color(100, 150, 200);
+		private final Color highlightBorderColor = new Color(0, 120, 215);
+
+		public DropZonePanel() {
+			super(new BorderLayout());
+			setOpaque(false);
+			resetBorder();
+		}
+
+		public void setDragOver(boolean dragOver) {
+			this.isDragOver = dragOver;
+			if (dragOver) {
+				setBorder(BorderFactory.createLineBorder(highlightBorderColor, 2));
+			} else {
+				resetBorder();
+			}
+			repaint();
+		}
+
+		private void resetBorder() {
+			setBorder(BorderFactory.createDashedBorder(normalBorderColor, 1, 5, 3, true));
+		}
+
+		@Override
+		protected void paintComponent(Graphics g) {
+			super.paintComponent(g);
+			if (isDragOver) {
+				g.setColor(new Color(0, 120, 215, 40));
+				g.fillRect(0, 0, getWidth(), getHeight());
+			}
+		}
+	}
+
+	/**
+	 * Create a styled drop zone panel with hint text
+	 */
+	private static DropZonePanel createDropZone(String hintText) {
+		DropZonePanel dropZone = new DropZonePanel();
+		dropZone.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+		dropZone.setPreferredSize(new Dimension(Integer.MAX_VALUE, 60));
+
+		JLabel hintLabel = new JLabel(hintText, JLabel.CENTER);
+		hintLabel.setFont(new Font("Calibri", Font.PLAIN, 14));
+		hintLabel.setForeground(new Color(150, 155, 160));
+		dropZone.add(hintLabel, BorderLayout.CENTER);
+
+		return dropZone;
+	}
+
+	/**
 	 * Tạo panel cho tab "Cập nhật tuổi"
 	 */
 	private static JPanel createUpdateAgePanel() {
@@ -547,6 +668,58 @@ public class MainUIProcessor {
 		// To store file names and their full paths
 		Map<String, String> filePathMap = new HashMap<>();
 
+		// Create drop zone for drag-and-drop
+		DropZonePanel dropZone = createDropZone("Kéo thả file .docx vào đây hoặc nhấn CHỌN FILE");
+
+		new DropTarget(dropZone, DnDConstants.ACTION_COPY, new DropTargetListener() {
+			@Override
+			public void dragEnter(DropTargetDragEvent dtde) {
+				dropZone.setDragOver(true);
+			}
+
+			@Override
+			public void dragOver(DropTargetDragEvent dtde) {
+			}
+
+			@Override
+			public void dropActionChanged(DropTargetDragEvent dtde) {
+			}
+
+			@Override
+			public void dragExit(DropTargetEvent dte) {
+				dropZone.setDragOver(false);
+			}
+
+			@Override
+			public void drop(DropTargetDropEvent dtde) {
+				try {
+					dropZone.setDragOver(false);
+
+					if (dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+						dtde.acceptDrop(DnDConstants.ACTION_COPY);
+						@SuppressWarnings("unchecked")
+						List<File> files = (List<File>) dtde.getTransferable()
+								.getTransferData(DataFlavor.javaFileListFlavor);
+
+						// Filter only .docx files
+						File[] docxFiles = files.stream()
+								.filter(f -> f.getName().endsWith(".docx"))
+								.toArray(File[]::new);
+
+						if (docxFiles.length > 0) {
+							ContentDocProcessingHelper.addFilesToPanel(docxFiles, fileLabel, fileListPanel, filePathMap);
+						}
+						dtde.dropComplete(true);
+					} else {
+						dtde.rejectDrop();
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+					dtde.rejectDrop();
+				}
+			}
+		}, true);
+
 		selectFileButton.addActionListener(e -> {
 			ContentDocProcessingHelper.processSelectDocFiles(fileLabel, fileListPanel, filePathMap);
 		});
@@ -568,8 +741,14 @@ public class MainUIProcessor {
 			fileListPanel.repaint();
 		});
 
+		JPanel centerPanel = new JPanel();
+		centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
+		centerPanel.setOpaque(false);
+		centerPanel.add(dropZone);
+		centerPanel.add(fileListScrollPane);
+
 		panel.add(topPanel, BorderLayout.NORTH);
-		panel.add(fileListScrollPane, BorderLayout.CENTER);
+		panel.add(centerPanel, BorderLayout.CENTER);
 		panel.add(logScrollPane, BorderLayout.SOUTH);
 
 		return panel;

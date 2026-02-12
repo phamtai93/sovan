@@ -318,18 +318,23 @@ public class Utils {
 	 */
 	public static void copyRunFormatting(XWPFParagraph paragraph, XWPFRun source, XWPFRun target,
 			XWPFParagraph referParagraph) {
-		target.setFontFamily(source.getFontFamily());
-		target.setFontSize(source.getFontSizeAsDouble());
-		target.setBold(source.isBold());
-		target.setItalic(source.isItalic());
-		target.setUnderline(source.getUnderline());
-		target.setColor(source.getColor());
-		if (referParagraph != null) {
-			paragraph.setSpacingLineRule(referParagraph.getSpacingLineRule());
-			paragraph.setSpacingBetween(referParagraph.getSpacingBetween() / 20.0);
-			paragraph.setSpacingAfter(referParagraph.getSpacingAfter());
-			paragraph.setSpacingBefore(referParagraph.getSpacingBefore());
+		try {
+			target.setFontFamily(source.getFontFamily());
+			target.setFontSize(source.getFontSizeAsDouble());
+			target.setBold(source.isBold());
+			target.setItalic(source.isItalic());
+			target.setUnderline(source.getUnderline());
+			target.setColor(source.getColor());
+			if (referParagraph != null) {
+				paragraph.setSpacingLineRule(referParagraph.getSpacingLineRule());
+				paragraph.setSpacingBetween(referParagraph.getSpacingBetween() / 20.0);
+				paragraph.setSpacingAfter(referParagraph.getSpacingAfter());
+				paragraph.setSpacingBefore(referParagraph.getSpacingBefore());
+			}
+		} catch (Exception e) {
+			System.out.println("lỗi format!!!");
 		}
+
 	}
 
 	/**

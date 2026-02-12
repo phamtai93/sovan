@@ -58,23 +58,31 @@ public class MotalListProcessingHelper {
 		if (returnValue == JFileChooser.APPROVE_OPTION) {
 			File selectedFile = fileChooser.getSelectedFile();
 			if (selectedFile.getName().endsWith(".xls") || selectedFile.getName().endsWith(".xlsx")) {
-				selectedFilePath[0] = selectedFile.getAbsolutePath();
-				fileLabel.setText("File đã chọn: " + selectedFile.getName());
-
-				// Tự động xác định `endField`
-				int autoEndField = detectEndField(selectedFile.getAbsolutePath(), 4); // Tìm endField từ hàng 4
-
-				// Cập nhật UI
-				startField.setText("4");
-				endField.setText(String.valueOf(autoEndField));
-				// Hiển thị hướng dẫn và input khi chọn file thành công
-				guideLabel.setVisible(true);
-				inputPanel.setVisible(true);
+				applySelectedFile(selectedFile, fileLabel, guideLabel, inputPanel, startField, endField, selectedFilePath);
 			} else {
 				JOptionPane.showMessageDialog(null, "Chỉ được chọn file Excel (.xls, .xlsx)!", "Lỗi",
 						JOptionPane.ERROR_MESSAGE);
 			}
 		}
+	}
+
+	/**
+	 * Helper: Apply selected file to UI (used by both JFileChooser and drag-and-drop)
+	 */
+	static void applySelectedFile(File file, JLabel fileLabel, JLabel guideLabel,
+			JPanel inputPanel, JTextField startField, JTextField endField, String[] selectedFilePath) {
+		selectedFilePath[0] = file.getAbsolutePath();
+		fileLabel.setText("File đã chọn: " + file.getName());
+
+		// Tự động xác định `endField`
+		int autoEndField = detectEndField(file.getAbsolutePath(), 4); // Tìm endField từ hàng 4
+
+		// Cập nhật UI
+		startField.setText("4");
+		endField.setText(String.valueOf(autoEndField));
+		// Hiển thị hướng dẫn và input khi chọn file thành công
+		guideLabel.setVisible(true);
+		inputPanel.setVisible(true);
 	}
 
 	public static void processCheckingSaoHan(JTextField startField, JTextField endField, JTextArea logTextArea,
