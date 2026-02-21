@@ -736,8 +736,8 @@ public class MotalListProcessingHelper {
             SaoChieuEnum sao = obj.getSaoRecalculated();
             HanEnum han = obj.getHanRecalculated();
 
-            if (sao == null || han == null) {
-                continue; // Bỏ qua nếu không có Sao hoặc Hạn
+            if (sao == null || han == null || obj.isNotSupported()) {
+                continue; // Bỏ qua nếu không có Sao hoặc Hạn, hoặc Không được hỗ trợ Sao Hạn
             }
 
             // Tạo SaoHanGroup nếu chưa có
