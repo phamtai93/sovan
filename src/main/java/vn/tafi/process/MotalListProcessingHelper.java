@@ -567,10 +567,19 @@ public class MotalListProcessingHelper {
 		List<MortalObject> errorObjects = new ArrayList<>();
 		List<String> errorMessages = new ArrayList<>();
 
+		// Track xem mỗi nhóm hostOrder có chủ hộ không
+		// LinkedHashMap để giữ thứ tự xuất hiện của các hostOrder
+		LinkedHashMap<Integer, Boolean> hostOrderHasHost = new LinkedHashMap<>();
+
 		for (MortalObject obj : mortalObjects) {
 
 			// Có thể check if (obj.isNotSupported()) và bỏ qua phần xử lý
 			// (vì người này không được hổ trợ kiểm tra Sao Hạn)
+
+			// 🎯 Ghi nhận chủ hộ cho mỗi nhóm hostOrder
+			if (obj.getHostOrder() != null) {
+				hostOrderHasHost.merge(obj.getHostOrder(), obj.isAHost(), Boolean::logicalOr);
+			}
 
 			// 🎯 Tính lại tuổi: ageRecalculated = year - estimatedYearOB + 1
 			if (obj.getEstimatedYearOB() != null) {
@@ -608,6 +617,13 @@ public class MotalListProcessingHelper {
 					errorMessages.add(errorMessage.toString());
 					errorObjects.add(obj);
 				}
+			}
+		}
+
+		// 🎯 Kiểm tra từng nhóm hộ gia đình có chủ hộ không
+		for (Map.Entry<Integer, Boolean> entry : hostOrderHasHost.entrySet()) {
+			if (!entry.getValue()) {
+				errorMessages.add("Hộ số " + entry.getKey() + " không có chủ hộ!");
 			}
 		}
 
