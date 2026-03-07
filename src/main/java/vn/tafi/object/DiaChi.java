@@ -5,15 +5,15 @@ package vn.tafi.object;
  * Thứ tự: Tí, Sửu, Dần, Mão, Thìn, Tỵ, Ngọ, Mùi, Thân, Dậu, Tuất, Hợi
  */
 public enum DiaChi {
-	TI("Tí", 0),
+	TI("Tý", 0),
 	SUU("Sửu", 1),
 	DAN("Dần", 2),
-	MAO("Mão", 3),
-	THAN("Thìn", 4),
+	MAO("Mẹo", 3),
+	THIN("Thìn", 4),
 	TY("Tỵ", 5),
 	NGO("Ngọ", 6),
 	MUI("Mùi", 7),
-	THAN_2("Thân", 8),
+	THAN("Thân", 8),
 	DAU("Dậu", 9),
 	TUAT("Tuất", 10),
 	HOI("Hợi", 11);

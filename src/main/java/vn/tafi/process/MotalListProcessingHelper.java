@@ -132,17 +132,7 @@ public class MotalListProcessingHelper {
 			} else {
 				MortalDataResultDTO dataResultDTO = processMortalObjectsFromExcel(mortalObjects, currentYear);
 
-				// Kiểm tra xem có Mortal object nào không có hostOrder
-				List<String> allErrors = new ArrayList<>(dataResultDTO.getErrorMessages());
-				List<MortalObject> nullHostOrderObjects = new ArrayList<>();
-				for (MortalObject obj : mortalObjects) {
-					if (obj.getHostOrder() == null) {
-						nullHostOrderObjects.add(obj);
-						String errorMsg = String.format("STT: %s | Họ tên: %s %s %s | Lỗi: Thiếu thông tin 'Hộ thứ'",
-								obj.getOrder(), obj.getFmName(), obj.getMidName(), obj.getName());
-						allErrors.add(errorMsg);
-					}
-				}
+				List<String> allErrors = dataResultDTO.getErrorMessages();
 
 				// Hiển thị kết quả vào textArea
 				logTextArea.setText("   Xử lý dữ liệu cho năm: " + currentYear + " - " + lunarYear + "\n");
@@ -573,12 +563,13 @@ public class MotalListProcessingHelper {
 
 		for (MortalObject obj : mortalObjects) {
 
-			// Có thể check if (obj.isNotSupported()) và bỏ qua phần xử lý
-			// (vì người này không được hổ trợ kiểm tra Sao Hạn)
-
 			// 🎯 Ghi nhận chủ hộ cho mỗi nhóm hostOrder
 			if (obj.getHostOrder() != null) {
 				hostOrderHasHost.merge(obj.getHostOrder(), obj.isAHost(), Boolean::logicalOr);
+			} else {
+				String errorMsg = String.format("STT: %s | Họ tên: %s %s %s | Lỗi: Thiếu thông tin 'Hộ thứ'",
+						obj.getOrder(), obj.getFmName(), obj.getMidName(), obj.getName());
+				errorMessages.add(errorMsg);
 			}
 
 			// 🎯 Tính lại tuổi: ageRecalculated = year - estimatedYearOB + 1
@@ -586,37 +577,53 @@ public class MotalListProcessingHelper {
 				obj.setAgeRecalculated(currentYear - obj.getEstimatedYearOB() + 1);
 			}
 
+			// 🎯 Kiểm tra Can Chi có khớp với năm sinh ước tính không
+			boolean isCanChiMismatch = false;
+			String expectedCanChi = null;
+			if (obj.getEstimatedYearOB() != null) {
+				expectedCanChi = Utils.calculateCanChiYear(obj.getEstimatedYearOB());
+				String actualCanChi = ((obj.getThienCan() != null ? obj.getThienCan() : "")
+						+ " " + (obj.getDiaChi() != null ? obj.getDiaChi() : "")).trim();
+				isCanChiMismatch = !expectedCanChi.equalsIgnoreCase(actualCanChi);
+			}
+
 			// 🎯 Tra cứu Sao chiếu mệnh và Hạn
+			boolean isAgeMismatch = false;
+			boolean isSaoMismatch = false;
+			boolean isHanMismatch = false;
+
 			if (obj.getAgeRecalculated() != null && obj.getGender() != null) {
 				boolean isMale = "Nam".equalsIgnoreCase(obj.getGender());
 				obj.setSaoRecalculated(SaoChieuEnum.getSaoChieuMang(obj.getAgeRecalculated(), isMale));
 				obj.setHanRecalculated(HanEnum.getHan(obj.getAgeRecalculated(), isMale));
-				// Kiểm tra sự khác biệt giữa giá trị từ file Excel và giá trị tính toán lại
-				boolean isAgeMismatch = !Objects.equals(obj.getAge(), obj.getAgeRecalculated());
-				boolean isSaoMismatch = !obj.isNotSupported() && obj.getSaoRecalculated() != null
+				isAgeMismatch = !Objects.equals(obj.getAge(), obj.getAgeRecalculated());
+				isSaoMismatch = !obj.isNotSupported() && obj.getSaoRecalculated() != null
 						&& !Utils.isEqualIgnoreNull(obj.getSao(), obj.getSaoRecalculated().getSaoName());
-				boolean isHanMismatch = !obj.isNotSupported() && obj.getHanRecalculated() != null
+				isHanMismatch = !obj.isNotSupported() && obj.getHanRecalculated() != null
 						&& !Utils.isEqualIgnoreNull(obj.getHan(), obj.getHanRecalculated().getHanName());
+			}
 
-				// Nếu có lỗi, thêm vào danh sách lỗi
-				if (isAgeMismatch || isSaoMismatch || isHanMismatch) {
-					StringBuilder errorMessage = new StringBuilder();
-					errorMessage.append("STT: ").append(obj.getOrder()).append(" - Họ tên: ").append(obj.getFmName())
-							.append(" ").append(obj.getMidName()).append(" ").append(obj.getName());
+			// Nếu có bất kỳ lỗi nào, gộp tất cả vào một dòng thông báo
+			if (isCanChiMismatch || isAgeMismatch || isSaoMismatch || isHanMismatch) {
+				StringBuilder errorMessage = new StringBuilder();
+				errorMessage.append("STT: ").append(obj.getOrder()).append(" - Họ tên: ").append(obj.getFmName())
+						.append(" ").append(obj.getMidName()).append(" ").append(obj.getName());
 
-					if (isAgeMismatch) {
-						errorMessage.append(" - Tuổi sai, đúng phải là: ").append(obj.getAgeRecalculated());
-					}
-					if (isSaoMismatch) {
-						errorMessage.append(" - Sao sai, đúng phải là: ").append(obj.getSaoRecalculated().getSaoName());
-					}
-					if (isHanMismatch) {
-						errorMessage.append(" - Hạn sai, đúng phải là: ").append(obj.getHanRecalculated().getHanName());
-					}
-
-					errorMessages.add(errorMessage.toString());
-					errorObjects.add(obj);
+				if (isCanChiMismatch) {
+					errorMessage.append(" - Can Chi sai, đúng phải là: ").append(expectedCanChi);
 				}
+				if (isAgeMismatch) {
+					errorMessage.append(" - Tuổi sai, đúng phải là: ").append(obj.getAgeRecalculated());
+				}
+				if (isSaoMismatch) {
+					errorMessage.append(" - Sao sai, đúng phải là: ").append(obj.getSaoRecalculated().getSaoName());
+				}
+				if (isHanMismatch) {
+					errorMessage.append(" - Hạn sai, đúng phải là: ").append(obj.getHanRecalculated().getHanName());
+				}
+
+				errorMessages.add(errorMessage.toString());
+				errorObjects.add(obj);
 			}
 		}
 

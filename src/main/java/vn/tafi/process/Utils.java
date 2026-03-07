@@ -57,23 +57,23 @@ public class Utils {
 	}
 
 	/**
-	 * Tính toán Can Giáp từ năm Tây lịch
-	 * Can Giáp = (Thiên Can) + (Địa Chi) dựa trên vòng 60 năm
+	 * Tính toán Can Chi từ năm Tây lịch
+	 * Can Chi = (Thiên Can) + (Địa Chi) dựa trên vòng 60 năm
 	 *
 	 * Công thức:
 	 * - Mỗi năm trôi qua tăng 1 Thiên Can và 1 Địa Chi
-	 * - Tham chiếu: 1945 = Ất Dậu (Can index 1, Chi index 9)
+	 * - Tham chiếu: 1900 = Canh Tý (Can index 6, Chi index 0)
 	 *
 	 * @param year năm Tây lịch (ví dụ: 2026)
-	 * @return Can Giáp dưới dạng String (ví dụ: "Bính Ngọ")
+	 * @return Can Chi dưới dạng String (ví dụ: "Bính Ngọ")
 	 */
 	public static String calculateCanChiYear(int year) {
-		// Sử dụng năm 1945 (Ất Dậu) làm tham chiếu
-		int yearsFrom1945 = year - 1945;
-		int canIndex = (1 + yearsFrom1945) % 10;
-		int chiIndex = (9 + yearsFrom1945) % 12;
+		// Sử dụng năm 1900 (Canh Tý) làm tham chiếu
+		int yearsFrom1900 = year - 1900;
+		int canIndex = (6 + yearsFrom1900) % 10;
+		int chiIndex = yearsFrom1900 % 12;
 
-		// Đảm bảo index không âm
+		// Đảm bảo index không âm (cho năm < 1900)
 		if (canIndex < 0) canIndex += 10;
 		if (chiIndex < 0) chiIndex += 12;
 
